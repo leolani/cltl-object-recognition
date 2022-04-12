@@ -14,7 +14,6 @@ class Object:
     Includes a vector representation of the face and optional meta information.
     """
     # TODO switch to np.typing.ArrayLike
-    embedding: np.ndarray
     type: Optional[int]
 
 

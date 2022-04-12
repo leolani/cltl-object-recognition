@@ -18,8 +18,7 @@ from PIL import Image
 from cltl.object_recognition.plots import Annotator, Colors
 
 ObjectInfo = namedtuple('ObjectInfo', ('type',
-                                   'bbox',
-                                   'embedding'))
+                                   'bbox'))
 
 
 class ObjectDetectorProxy(ObjectDetector):
@@ -52,11 +51,10 @@ class ObjectDetectorProxy(ObjectDetector):
         return objects, bounds
 
     def _to_object(self, object_info: ObjectInfo) -> Tuple[Object, Bounds]:
-        bbox = [int(num) for num in object_info.bbox.tolist()]
-        representation = object_info.embedding
+        bbox = [int(num) for num in object_info.bbox]
         type = object_info.type
 
-        return Object(representation, type), Bounds(bbox[0], bbox[2], bbox[1], bbox[3])
+        return Object(type), Bounds(bbox[0], bbox[2], bbox[1], bbox[3])
 
     def to_binary_image(self, image: np.ndarray) -> bytes:
         is_success, buffer = cv2.imencode(".png", image)
@@ -70,14 +68,12 @@ class ObjectDetectorProxy(ObjectDetector):
         image: np.ndarray,
         url_object: str = "http://127.0.0.1:10004/"
     ) -> Tuple[ObjectInfo]:
-        object_types, object_bboxes, det_scores, landmarks, embeddings = self.run_object_api({"image": self.to_binary_image(image)}, url_object)
+        object_bboxes, det_scores, object_types = self.run_object_api({"image": self.to_binary_image(image)}, url_object)
 
         return tuple(ObjectInfo(*info) for info in zip(object_types,
-                                              object_bboxes,
-                                              embeddings))
+                                              object_bboxes))
 
-
-    def run_object_api(to_send: dict, url_object: str = "http://127.0.0.1:10004/") -> tuple:
+    def run_object_api(self, to_send: dict, url_object: str = "http://127.0.0.1:10004/") -> tuple:
         logging.debug(f"sending image to server...")
         start = time.time()
         to_send = jsonpickle.encode(to_send)
@@ -94,9 +90,7 @@ class ObjectDetectorProxy(ObjectDetector):
         det_scores = [odr["det_score"] for odr in object_detection_recognition]
         object_types = [odr["label_string"] for odr in object_detection_recognition]
 
-        embeddings = [fdr["normed_embedding"] for fdr in object_detection_recognition]
-
-        return object_bboxes, det_scores, object_types, embeddings
+        return object_bboxes, det_scores, object_types
 
 
 
