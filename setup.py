@@ -27,7 +27,6 @@ setup(
         "impl": [
             'cltl.backend',
             'opencv-python',
-            'scikit-learn',
             'requests',
             'jsonpickle',
             'python_on_whales'

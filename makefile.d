@@ -1,1 +1,0 @@
-/Users/piek/Desktop/d-Leolani/g2ky-parent/cltl-face-recognition: /Users/piek/Desktop/d-Leolani/g2ky-parent/emissor /Users/piek/Desktop/d-Leolani/g2ky-parent/cltl-requirements /Users/piek/Desktop/d-Leolani/g2ky-parent/cltl-combot /Users/piek/Desktop/d-Leolani/g2ky-parent/cltl-backend

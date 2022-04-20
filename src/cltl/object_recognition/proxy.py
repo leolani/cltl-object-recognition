@@ -1,24 +1,20 @@
+import logging
 import time
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
+from typing import Iterable, Tuple
 
 import cv2
 import jsonpickle
-import logging
 import numpy as np
-import pickle
 import requests
 from cltl.backend.api.camera import Bounds
-from typing import Iterable, Tuple
 
 from cltl.object_recognition.api import Object, ObjectDetector
 from cltl.object_recognition.docker import DockerInfra
 
-from PIL import Image
-from cltl.object_recognition.plots import Annotator, Colors
 
-ObjectInfo = namedtuple('ObjectInfo', ('type',
-                                   'bbox'))
+ObjectInfo = namedtuple('ObjectInfo', ('type', 'bbox'))
 
 
 class ObjectDetectorProxy(ObjectDetector):
@@ -91,37 +87,3 @@ class ObjectDetectorProxy(ObjectDetector):
         object_types = [odr["label_string"] for odr in object_detection_recognition]
 
         return object_bboxes, det_scores, object_types
-
-
-
-
-    def annotate_yolo(image: Image.Image, yolo_results: list) -> Image.Image:
-        """Annotate YOLO Image.
-
-        Args
-        ----
-        image: PIL image object.
-        yolo_results: yolo prediction results.
-
-        Returns
-        -------
-        image_annotated: Annotated PIL image object.
-
-        """
-        logging.debug("Annotating yolo image ...")
-        annotator = Annotator(np.ascontiguousarray((image)))
-        colors = Colors()  # create instance for 'from plots import colors'
-
-        for result in yolo_results:
-            box = result["yolo_bbox"]
-            label_num = result["label_num"]
-            label_string = result["label_string"]
-
-            color = colors(label_num)
-            annotator.box_label(box, label_string, color=color)
-
-        image_annotated = Image.fromarray(annotator.im)
-        logging.info(f"YOLO image annotation is done!")
-
-        return image_annotated
-    
