@@ -7,7 +7,7 @@ from cltl.combot.infra.config import ConfigurationManager
 from cltl.combot.infra.event import Event, EventBus
 from cltl.combot.infra.resource import ResourceManager
 from cltl.combot.infra.topic_worker import TopicWorker
-from cltl_service.backend.schema import ImageSignalEvent
+from cltl.combot.event.emissor import ImageSignalEvent
 
 from cltl.object_recognition.api import ObjectDetector
 from cltl_service.object_recognition.schema import ObjectRecognitionEvent
