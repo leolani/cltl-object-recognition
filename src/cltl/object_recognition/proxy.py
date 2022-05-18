@@ -11,7 +11,7 @@ import requests
 from cltl.backend.api.camera import Bounds
 
 from cltl.object_recognition.api import Object, ObjectDetector
-from cltl.object_recognition.docker import DockerInfra
+from cltl.combot.infra.docker import DockerInfra
 
 
 ObjectInfo = namedtuple('ObjectInfo', ('type', 'bbox'))
