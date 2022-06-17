@@ -80,10 +80,12 @@ class ObjectDetectorProxy(ObjectDetector):
 
         object_detection_recognition = response["yolo_results"]
 
-        logging.info(f"{len(object_detection_recognition)} objects detected!")
+        logging.debug("%s objects detected!", len(object_detection_recognition))
 
         object_bboxes = [odr.pop("bbox") for odr in object_detection_recognition]
         det_scores = [odr["det_score"] for odr in object_detection_recognition]
         object_types = [odr["label_string"] for odr in object_detection_recognition]
+
+        logging.info("Detected %s objects: %s", len(object_detection_recognition), object_types)
 
         return object_bboxes, det_scores, object_types
