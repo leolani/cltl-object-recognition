@@ -13,13 +13,23 @@ from cltl.backend.api.camera import Bounds
 from cltl.object_recognition.api import Object, ObjectDetector
 from cltl.combot.infra.docker import DockerInfra
 
+logger = logging.getLogger(__name__)
+
 
 ObjectInfo = namedtuple('ObjectInfo', ('type', 'bbox'))
 
 
 class ObjectDetectorProxy(ObjectDetector):
-    def __init__(self, start_infra: bool = True):
-        self._detect_infra = DockerInfra('tae898/yolov5', 10004, 10004, False, 15) if start_infra else None
+    def __init__(self, start_infra: bool = True, detector_url: str = None):
+        if start_infra:
+            self._detect_infra = DockerInfra('tae898/yolov5', 10004, 10004, False, 15)
+            self._detector_url = "http://127.0.0.1:10004/"
+        else:
+            self._detect_infra = None
+            self._detector_url = detector_url
+
+        if not self._detector_url:
+            raise ValueError("No url defined for docker image")
 
     def __enter__(self):
         if self._detect_infra:
@@ -38,7 +48,7 @@ class ObjectDetectorProxy(ObjectDetector):
             executor.shutdown()
 
     def detect(self, image: np.ndarray) -> Tuple[Iterable[Object], Iterable[Bounds]]:
-        logging.info("Processing image %s", image.shape)
+        logger.info("Processing image %s", image.shape)
 
         object_infos = self.detect_objects(image)
         if object_infos:
@@ -62,32 +72,28 @@ class ObjectDetectorProxy(ObjectDetector):
 
         return buffer
 
-    def detect_objects(self,
-        image: np.ndarray,
-        url_object: str = "http://127.0.0.1:10004/"
-    ) -> Tuple[ObjectInfo]:
-        object_bboxes, det_scores, object_types = self.run_object_api({"image": self.to_binary_image(image)}, url_object)
+    def detect_objects(self, image: np.ndarray) -> Tuple[ObjectInfo]:
+        object_bboxes, det_scores, object_types = self.run_object_api({"image": self.to_binary_image(image)})
 
-        return tuple(ObjectInfo(*info) for info in zip(object_types,
-                                              object_bboxes))
+        return tuple(ObjectInfo(*info) for info in zip(object_types, object_bboxes))
 
-    def run_object_api(self, to_send: dict, url_object: str = "http://127.0.0.1:10004/") -> tuple:
-        logging.debug(f"sending image to server...")
+    def run_object_api(self, to_send: dict) -> tuple:
+        logger.debug(f"sending image to server...")
         start = time.time()
         to_send = jsonpickle.encode(to_send)
-        response = requests.post(url_object, json=to_send)
-        logging.info("got %s from server in %s sec", response, time.time()-start)
+        response = requests.post(self._detector_url, json=to_send)
+
+        logger.info("got %s from server in %s sec", response, time.time()-start)
 
         response = jsonpickle.decode(response.text)
-
         object_detection_recognition = response["yolo_results"]
 
-        logging.debug("%s objects detected!", len(object_detection_recognition))
+        logger.debug("%s objects detected!", len(object_detection_recognition))
 
         object_bboxes = [odr.pop("bbox") for odr in object_detection_recognition]
         det_scores = [odr["det_score"] for odr in object_detection_recognition]
         object_types = [odr["label_string"] for odr in object_detection_recognition]
 
-        logging.info("Detected %s objects: %s", len(object_detection_recognition), object_types)
+        logger.info("Detected %s objects: %s", len(object_detection_recognition), object_types)
 
         return object_bboxes, det_scores, object_types
