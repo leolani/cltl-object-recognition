@@ -18,22 +18,24 @@ ObjectInfo = namedtuple('ObjectInfo', ('type', 'bbox'))
 
 
 class ObjectDetectorProxy(ObjectDetector):
-    def __init__(self):
-        self.detect_infra = DockerInfra('tae898/yolov5', 10004, 10004, False, 15)
+    def __init__(self, start_infra: bool = True):
+        self._detect_infra = DockerInfra('tae898/yolov5', 10004, 10004, False, 15) if start_infra else None
 
     def __enter__(self):
-        executor = ThreadPoolExecutor(max_workers=2)
-        detect = executor.submit(self.detect_infra.__enter__)
-        detect.result()
-        executor.shutdown()
+        if self._detect_infra:
+            executor = ThreadPoolExecutor(max_workers=2)
+            detect = executor.submit(self._detect_infra.__enter__)
+            detect.result()
+            executor.shutdown()
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        executor = ThreadPoolExecutor(max_workers=2)
-        detect = executor.submit(lambda: self.detect_infra.__exit__(exc_type, exc_val, exc_tb))
-        detect.result()
-        executor.shutdown()
+        if self._detect_infra:
+            executor = ThreadPoolExecutor(max_workers=2)
+            detect = executor.submit(lambda: self._detect_infra.__exit__(exc_type, exc_val, exc_tb))
+            detect.result()
+            executor.shutdown()
 
     def detect(self, image: np.ndarray) -> Tuple[Iterable[Object], Iterable[Bounds]]:
         logging.info("Processing image %s", image.shape)
