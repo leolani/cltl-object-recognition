@@ -35,7 +35,8 @@ class ObjectDetector(abc.ABC):
         Iterable[Object]
             The objects detected in the image.
         Iterable[Bounds]
-            The positions of the detected objects in the image.
+            The bounding boxes of the detected objects in the image. Provides
+            the same number of Bounds in the same order as the returned objects.
         """
         raise NotImplementedError()
 
