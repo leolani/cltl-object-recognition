@@ -3,7 +3,7 @@
 This repository is a component of the [Leolani framework](https://github.com/leolani/cltl-combot).
 For usage of the component within the framework see the instructions there.
 
-## Object recognition
+## Object recognition (cltl.object_recognition)
 
 The component provides Object recognition on images.
 
@@ -33,23 +33,25 @@ The implementation can be configured in the section
 * _start_infra_: Start the Docker image in the _ObjectDetectorProxy_
 * _detector_url_: If _start_infra_ in set to _False_, connect to the provided URL
 
-## Integration
+## Integration (cltl_service.object_recognition)
 
-The service for the component accepts events that carry an _ImageSignal_ as payload and emits
-events that carry a list of _Mentions_, annotating bounding boxes in the image with the detected
-objects.
 
 ### Events
 
+The service for the component accepts events that carry an _ImageSignal_ as payload and for each
+received event it emits an event on the output topic that carries a list of _Mentions_, annotating
+bounding boxes in the image with the detected objects.
+
+Example output event:
 ```json
 {
   "mentions": [
     {
       "annotations": [
         {
-          "source": "cltl.object_recognition.0.0.1",
+          "source": "python-source:cltl.object_recognition#0.0.1",
           "timestamp": 1663166417633,
-          "type": "cltl.object_recognition.api.Object",
+          "type": "python-type:cltl.object_recognition.api.Object",
           "value": {
             "type": "chair"
           }
@@ -58,12 +60,7 @@ objects.
       "id": "d8428d8d-20ec-4e04-9491-6c79eb905f66",
       "segment": [
         {
-          "bounds": [
-            0,
-            0,
-            1,
-            1
-          ],
+          "bounds": [0, 0, 1, 1],
           "container_id": "36729510-236f-414b-839c-d43f8d93d2c8"
         }
       ]
@@ -75,7 +72,7 @@ objects.
 
 ### Topic Configuration
 
-For integration the input and output topics must be defined in the following~~~~ configuration section
+For integration the input and output topics must be defined in the following configuration section:
 
     [cltl.object_recognition.events]
     image_topic: <input topic name>
