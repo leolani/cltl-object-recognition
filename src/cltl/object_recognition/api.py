@@ -1,6 +1,6 @@
 import abc
 import dataclasses
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Optional
 
 import numpy as np
 from cltl.backend.api.camera import Bounds
@@ -14,6 +14,8 @@ class Object:
     Includes the type of the object
     """
     type: str
+    label: str
+    confidence: Optional[float]
 
 
 class ObjectDetector(abc.ABC):
