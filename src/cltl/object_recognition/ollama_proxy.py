@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Iterable, Optional, Tuple
 
 import cv2
@@ -136,14 +137,37 @@ class OllamaObjectDetectorProxy(ObjectDetector):
                 "images": [self._to_binary_image(image)],
             }],
             format=_DETECTION_SCHEMA,
+            # Reasoning/"thinking" models (e.g. Qwen3-VL) put their reasoning in a
+            # separate `message.thinking` field when this is respected, keeping
+            # `message.content` limited to the actual (JSON) answer.
+            think=False,
         )
 
         content = response["message"]["content"]
+        return self._parse_response(content)
+
+    def _parse_response(self, content: str) -> dict:
+        # Some models (e.g. qwen3-vl:8b, see ollama/ollama#14798) ignore think=False
+        # and emit <think>...</think> reasoning directly into the content instead of
+        # the separate `thinking` field, so strip it out before parsing as JSON.
+        cleaned = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+
         try:
-            return json.loads(content)
+            return json.loads(cleaned)
         except json.JSONDecodeError:
-            logger.warning("Could not parse detection response as JSON: %s", content)
-            return {}
+            pass
+
+        # As a last resort, look for the first top-level JSON object in the text,
+        # in case the model added commentary around it despite the schema constraint.
+        match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                pass
+
+        logger.warning("Could not parse detection response as JSON: %s", content)
+        return {}
 
     def _to_object(self, detection: dict, width: int, height: int) -> Optional[Tuple[Object, Bounds]]:
         label = detection.get("label")
@@ -171,7 +195,8 @@ class OllamaObjectDetectorProxy(ObjectDetector):
 
         return bytes(buffer)
 
-#  python -m cltl.object_recognition.ollama_proxy  <image_path> [--model ...] [--host ...] [--api-key ...] [--show]
+# python -m cltl.object_recognition.ollama_proxy  <image_path> [--model ...] [--host ...] [--api-key ...] [--show]
+# python -m cltl.object_recognition.ollama_proxy data/image-1.jpeg --model qwen3-vl:2b-instruct
 def main():
     import argparse
     import os
