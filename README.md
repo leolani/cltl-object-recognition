@@ -33,6 +33,41 @@ The implementation can be configured in the section
 * _start_infra_: Start the Docker image in the _ObjectDetectorProxy_
 * _detector_url_: If _start_infra_ in set to _False_, connect to the provided URL
 
+#### VLM-based object recognition (Ollama)
+
+_cltl.object_recognition.ollama_proxy_ provides an alternative implementation, `OllamaObjectDetectorProxy`,
+that detects objects by prompting a vision-language model (e.g. [Qwen2.5-VL](https://ollama.com/library/qwen2.5vl))
+served through [Ollama](https://ollama.com), instead of relying on a dedicated object detection model. The model
+is asked to return detections as structured JSON with normalized bounding boxes, which are converted to the same
+`Object`/`Bounds` shape used by the rest of the component, so it can be used as a drop-in replacement for
+`ObjectDetectorProxy`.
+
+In addition to individual objects, the model is asked to classify the overall scene or place depicted in
+the image, e.g. `office`, `kitchen`, `living room`, `street`, `city`, `village`, `forest`. This is returned
+as an additional `Object` with `type` set to `"scene"`, whose `Bounds` cover the complete image, so it can
+be distinguished from the localized object detections (which have `type` set to the model name).
+
+Ollama can either be run locally, or accessed through Ollama's cloud API, which can run larger models
+(e.g. Qwen) without needing local GPU hardware.
+
+##### Configuration
+
+The implementation can be configured in the section
+
+    [cltl.object_recognition.ollama]
+    model: qwen2.5vl
+    host: https://ollama.com
+
+* _model_: Name of the (vision-capable) Ollama model to use. Defaults to `qwen2.5vl`.
+* _host_: Address of the Ollama server. If omitted, falls back to the `OLLAMA_HOST` environment
+  variable, or a local Ollama instance (`http://127.0.0.1:11434`). Set to `https://ollama.com` to use
+  Ollama's cloud API.
+* _api_key_: API key for Ollama's cloud API. For security, prefer setting the `OLLAMA_API_KEY`
+  environment variable over storing it in the config file. Not needed for a local instance.
+
+Detection quality and the reliability of bounding boxes depend on the chosen model, and are generally
+less precise than a dedicated object detector like Yolo5.
+
 ## Integration (cltl_service.object_recognition)
 
 

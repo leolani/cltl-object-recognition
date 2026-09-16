@@ -31,6 +31,11 @@ setup(
             'jsonpickle',
             'python_on_whales'
         ],
+        "ollama": [
+            'cltl.backend',
+            'opencv-python',
+            'ollama',
+        ],
         "service": [
             'cltl.combot',
             'cltl.backend[impl]',
