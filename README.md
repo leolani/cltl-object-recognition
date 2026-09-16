@@ -36,11 +36,18 @@ The implementation can be configured in the section
 #### VLM-based object recognition (Ollama)
 
 _cltl.object_recognition.ollama_proxy_ provides an alternative implementation, `OllamaObjectDetectorProxy`,
-that detects objects by prompting a vision-language model (e.g. [Qwen2.5-VL](https://ollama.com/library/qwen2.5vl))
-served through [Ollama](https://ollama.com), instead of relying on a dedicated object detection model. The model
-is asked to return detections as structured JSON with normalized bounding boxes, which are converted to the same
-`Object`/`Bounds` shape used by the rest of the component, so it can be used as a drop-in replacement for
-`ObjectDetectorProxy`.
+that detects objects by prompting a vision-language model (e.g. [Qwen2.5-VL](https://ollama.com/library/qwen2.5vl)
+or [Qwen3-VL](https://ollama.com/library/qwen3-vl)) served through [Ollama](https://ollama.com), instead of
+relying on a dedicated object detection model. The model is asked to return detections as structured JSON with
+normalized bounding boxes, which are converted to the same `Object`/`Bounds` shape used by the rest of the
+component, so it can be used as a drop-in replacement for `ObjectDetectorProxy`.
+
+Reasoning ("thinking") models are requested to answer without emitting their chain of thought
+(`think: false`), and the response is parsed defensively in case a model ignores that and leaks
+`<think>...</think>` reasoning into its answer anyway (a known issue for some Qwen3-VL tags, see
+[ollama/ollama#14798](https://github.com/ollama/ollama/issues/14798)). To avoid this entirely, prefer a
+non-thinking, instruction-tuned tag such as `qwen3-vl:4b-instruct` or `qwen3-vl:8b-instruct` over a bare
+`qwen3-vl:<size>` or `-thinking` tag.
 
 In addition to individual objects, the model is asked to classify the overall scene or place depicted in
 the image, e.g. `office`, `kitchen`, `living room`, `street`, `city`, `village`, `forest`. This is returned
